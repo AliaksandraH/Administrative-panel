@@ -3,7 +3,7 @@ import axios from "axios";
 
 const Editor = () => {
     const [pageList, setPageList] = useState([]);
-    const [newPageName, setNewPageName] = useState([]);
+    const [newPageName, setNewPageName] = useState("");
 
     const loadPageList = () => {
         axios
@@ -19,12 +19,24 @@ const Editor = () => {
             .catch(() => alert("Page already exists!"));
     };
 
+    const deletePage = (page) => {
+        axios
+            .post("./api/deletePage.php", { name: page })
+            .then(loadPageList)
+            .catch(() => alert("Page does not exist!"));
+    };
+
     useEffect(() => {
         loadPageList();
     }, []);
 
     const pages = pageList.map((page, index) => {
-        return <h1 key={index}>{page}</h1>;
+        return (
+            <div key={index}>
+                <h1>{page}</h1>
+                <button onClick={() => deletePage(page)}>Х</button>
+            </div>
+        );
     });
 
     return (
