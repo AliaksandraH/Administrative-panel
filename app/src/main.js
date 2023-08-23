@@ -1,30 +1,9 @@
-import $, { data } from "jquery";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import Editor from "./components/editor/editor";
 
-function getPageList() {
-    $("h1").remove();
-    $.get(
-        "./api",
-        (data) => {
-            data.forEach((file) => {
-                $("body").append(`<h1>${file}</h1>`);
-            });
-        },
-        "JSON"
-    );
-}
-
-getPageList();
-
-$("button").click(() => {
-    $.post(
-        "./api/createNewPage.php",
-        {
-            name: $("input").val(),
-        },
-        () => {
-            getPageList();
-        }
-    ).fail(() => {
-        alert("Page already exists!");
-    });
-});
+createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+        <Editor />
+    </React.StrictMode>
+);
