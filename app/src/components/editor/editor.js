@@ -7,6 +7,7 @@ import {
     parseStrToDom,
 } from "../../helpers/dom-helper.js";
 import "../../helpers/iframeLoader.js";
+import EditorText from "../editorText/editorText.js";
 
 const Editor = () => {
     const [pageList, setPageList] = useState([]);
@@ -40,11 +41,27 @@ const Editor = () => {
         iframeRef.current.contentDocument.body
             .querySelectorAll("text-editor")
             .forEach((el) => {
-                el.contentEditable = "true";
-                el.addEventListener("click", () => {
-                    onTextEdit(el);
-                });
+                const id = el.getAttribute("nodeid");
+                const virtualElement = virtualDom.current.body.querySelector(
+                    `[nodeid="${id}"]`
+                );
+                new EditorText(el, virtualElement);
             });
+    };
+
+    const injectStyles = () => {
+        const style = iframeRef.current.contentDocument.createElement("style");
+        style.innerHTML = `
+        text-editor:hover {
+            outline: 3px solid orange;
+            outline-offset: 8px;
+        }
+        text-editor:focus {
+            outline: 3px solid red;
+            outline-offset: 8px;
+        }
+        `;
+        iframeRef.current.contentDocument.head.appendChild(style);
     };
 
     function open(page) {
@@ -60,17 +77,9 @@ const Editor = () => {
             .then(serializeDomToStr)
             .then((html) => axios.post("./api/saveTempPage.php", { html }))
             .then(() => iframeRef.current.load("../temp.html"))
-            .then(() => enableEditing());
+            .then(() => enableEditing())
+            .then(() => injectStyles());
     }
-
-    const onTextEdit = (el) => {
-        const id = el.getAttribute("nodeid");
-        if (virtualDom.current && virtualDom.current.body) {
-            virtualDom.current.body.querySelector(
-                `[nodeid="${id}"]`
-            ).innerHTML = el.innerHTML;
-        }
-    };
 
     function save() {
         const newDom = virtualDom.current.cloneNode(virtualDom);
