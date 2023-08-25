@@ -15,6 +15,14 @@ export default class EditorText {
         this.element.addEventListener("input", (e) => {
             this.onTextEdit(e);
         });
+        if (
+            this.element.parentNode.nodeName === "A" ||
+            this.element.parentNode.nodeName === "BUTTON"
+        ) {
+            this.element.addEventListener("contextmenu", (e) => {
+                this.onCtxMenu(e);
+            });
+        }
     }
 
     onClick() {
@@ -30,6 +38,11 @@ export default class EditorText {
         if (e.keyCode == 13) {
             this.element.blur();
         }
+    }
+
+    onCtxMenu(e) {
+        e.preventDefault();
+        this.onClick();
     }
 
     onTextEdit() {
