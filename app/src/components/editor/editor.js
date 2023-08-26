@@ -8,11 +8,14 @@ import {
 } from "../../helpers/dom-helper.js";
 import "../../helpers/iframeLoader.js";
 import EditorText from "../editorText/editorText.js";
+import UIkit from "uikit";
+import Spinner from "../spinner/spinner.js";
 
 const Editor = () => {
     const [pageList, setPageList] = useState([]);
     const [newPageName, setNewPageName] = useState("");
     const [currentPage, setCurrentPage] = useState("index.html");
+    const [loading, setLoading] = useState(true);
     const iframeRef = useRef(null);
     const virtualDom = useRef(null);
 
@@ -78,14 +81,20 @@ const Editor = () => {
             .then((html) => axios.post("./api/saveTempPage.php", { html }))
             .then(() => iframeRef.current.load("../temp.html"))
             .then(() => enableEditing())
-            .then(() => injectStyles());
+            .then(() => injectStyles())
+            .then(() => setLoading(false));
     }
 
-    function save() {
+    function save(onSuccess, onError) {
+        setLoading(true);
         const newDom = virtualDom.current.cloneNode(virtualDom);
         unwrapTextNodes(newDom);
         const html = serializeDomToStr(newDom);
-        axios.post("./api/savePage.php", { pageName: currentPage, html });
+        axios
+            .post("./api/savePage.php", { pageName: currentPage, html })
+            .then(onSuccess)
+            .catch(onError)
+            .finally(() => setLoading(false));
     }
 
     const init = (page) => {
@@ -99,8 +108,31 @@ const Editor = () => {
 
     return (
         <>
-            <button onClick={() => save()}>Click</button>
             <iframe src={currentPage} ref={iframeRef} frameBorder="0"></iframe>
+            {loading ? <Spinner active /> : <Spinner />}
+            <div className="panel">
+                <button
+                    className="uk-button uk-button-primary"
+                    onClick={() =>
+                        save(
+                            () => {
+                                UIkit.notification({
+                                    message: "Changes saved!",
+                                    status: "success",
+                                });
+                            },
+                            () => {
+                                UIkit.notification({
+                                    message: "Save error!",
+                                    status: "danger",
+                                });
+                            }
+                        )
+                    }
+                >
+                    Save
+                </button>
+            </div>
         </>
     );
 };
