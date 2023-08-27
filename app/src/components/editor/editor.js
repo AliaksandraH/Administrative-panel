@@ -11,13 +11,15 @@ import EditorText from "../editorText/editorText.js";
 import UIkit from "uikit";
 import Spinner from "../spinner/spinner.js";
 import ChooseModal from "../chooseModal/chooseModal.js";
+import Panel from "../panel/panel.js";
 
 const Editor = () => {
     const [pageList, setPageList] = useState([]);
-    const [newPageName, setNewPageName] = useState("");
+    const [backupsList, setBackupsList] = useState([]);
     const [currentPage, setCurrentPage] = useState("index.html");
     const [loading, setLoading] = useState(false);
-    const [modal, setModal] = useState(false);
+    const [modalChoose, setModalChoose] = useState(false);
+    const [modalBackup, setModalBackup] = useState(false);
     const iframeRef = useRef(null);
     const virtualDom = useRef(null);
 
@@ -27,20 +29,6 @@ const Editor = () => {
             .then((data) => setPageList(data.data))
             .catch((error) => console.log("Error:", error));
     };
-
-    // const createNewPage = () => {
-    //     axios
-    //         .post("./api/createNewPage.php", { name: newPageName })
-    //         .then(loadPageList)
-    //         .catch(() => alert("Page already exists!"));
-    // };
-
-    // const deletePage = (page) => {
-    //     axios
-    //         .post("./api/deletePage.php", { name: page })
-    //         .then(loadPageList)
-    //         .catch(() => alert("Page does not exist!"));
-    // };
 
     const enableEditing = () => {
         iframeRef.current.contentDocument.body
@@ -69,9 +57,40 @@ const Editor = () => {
         iframeRef.current.contentDocument.head.appendChild(style);
     };
 
-    const open = (page) => {
+    const loadBackupsList = async (page = currentPage) => {
+        console.log("load", currentPage);
+        const array = [];
+        await axios.get("./backups/backups.json").then((data) =>
+            array.push(
+                data.data.filter((backup) => {
+                    return backup.page === page;
+                })
+            )
+        );
+        setBackupsList(array[0]);
+    };
+
+    const restoreBackup = (backup) => {
+        UIkit.modal
+            .confirm(
+                "Do you really want to restore the page from this backup? All unsaved data will be lost!",
+                { labels: { ok: "Recover", cancel: "Cancel" } }
+            )
+            .then(() => {
+                setLoading(true);
+                return axios.post("./api/restoreBackup.php", {
+                    page: currentPage,
+                    file: backup,
+                });
+            })
+            .then(() => {
+                open(currentPage);
+            });
+    };
+
+    const open = async (page) => {
         setCurrentPage(page);
-        axios
+        await axios
             .get(`../${page}?rnd=${Math.random}`)
             .then((data) => parseStrToDom(data.data))
             .then(wrapTextNodes)
@@ -92,19 +111,21 @@ const Editor = () => {
             .then(() => enableEditing())
             .then(() => injectStyles())
             .then(() => setLoading(false));
+        loadBackupsList(page);
     };
 
-    function save(onSuccess, onError) {
+    const save = async (onSuccess, onError) => {
         setLoading(true);
         const newDom = virtualDom.current.cloneNode(virtualDom);
         unwrapTextNodes(newDom);
         const html = serializeDomToStr(newDom);
-        axios
+        await axios
             .post("./api/savePage.php", { pageName: currentPage, html })
             .then(onSuccess)
             .catch(onError)
             .finally(() => setLoading(false));
-    }
+        loadBackupsList();
+    };
 
     const init = (page) => {
         setLoading(true);
@@ -118,43 +139,28 @@ const Editor = () => {
 
     return (
         <>
-            <iframe src={currentPage} ref={iframeRef} frameBorder="0"></iframe>
+            <iframe src="" ref={iframeRef} frameBorder="0"></iframe>
             <Spinner active={loading} />
-            <div className="panel">
-                <button
-                    className="uk-button uk-button-primary uk-margin-small-right"
-                    onClick={() => setModal(true)}
-                >
-                    Open
-                </button>
-                <button
-                    className="uk-button uk-button-primary"
-                    onClick={() =>
-                        save(
-                            () => {
-                                UIkit.notification({
-                                    message: "Changes saved!",
-                                    status: "success",
-                                });
-                            },
-                            () => {
-                                UIkit.notification({
-                                    message: "Save error!",
-                                    status: "danger",
-                                });
-                            }
-                        )
-                    }
-                >
-                    Save
-                </button>
-            </div>
-            {modal ? (
+            <Panel
+                modalChoose={setModalChoose}
+                modalBackup={setModalBackup}
+                save={save}
+            />
+            {modalChoose ? (
                 <ChooseModal
                     target={"modal-choose"}
                     data={pageList}
                     redirect={init}
-                    close={setModal}
+                    close={setModalChoose}
+                />
+            ) : null}
+
+            {modalBackup ? (
+                <ChooseModal
+                    target={"modal-choose"}
+                    data={backupsList}
+                    redirect={restoreBackup}
+                    close={setModalBackup}
                 />
             ) : null}
         </>
