@@ -1,6 +1,6 @@
 import React from "react";
 
-const ChooseModal = ({ target, data, redirect, close }) => {
+const ChooseModal = ({ data, redirect, close }) => {
     const list = data.map((item) => {
         if (item.time) {
             return (

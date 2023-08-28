@@ -12,6 +12,7 @@ import UIkit from "uikit";
 import Spinner from "../spinner/spinner.js";
 import ChooseModal from "../chooseModal/chooseModal.js";
 import Panel from "../panel/panel.js";
+import EditorMeta from "../editorMeta/editorMeta.js";
 
 const Editor = () => {
     const [pageList, setPageList] = useState([]);
@@ -20,6 +21,7 @@ const Editor = () => {
     const [loading, setLoading] = useState(false);
     const [modalChoose, setModalChoose] = useState(false);
     const [modalBackup, setModalBackup] = useState(false);
+    const [modalMeta, setModalMeta] = useState(false);
     const iframeRef = useRef(null);
     const virtualDom = useRef(null);
 
@@ -58,7 +60,6 @@ const Editor = () => {
     };
 
     const loadBackupsList = async (page = currentPage) => {
-        console.log("load", currentPage);
         const array = [];
         await axios.get("./backups/backups.json").then((data) =>
             array.push(
@@ -144,11 +145,11 @@ const Editor = () => {
             <Panel
                 modalChoose={setModalChoose}
                 modalBackup={setModalBackup}
+                modalMeta={setModalMeta}
                 save={save}
             />
             {modalChoose ? (
                 <ChooseModal
-                    target={"modal-choose"}
                     data={pageList}
                     redirect={init}
                     close={setModalChoose}
@@ -157,11 +158,13 @@ const Editor = () => {
 
             {modalBackup ? (
                 <ChooseModal
-                    target={"modal-choose"}
                     data={backupsList}
                     redirect={restoreBackup}
                     close={setModalBackup}
                 />
+            ) : null}
+            {modalMeta && virtualDom ? (
+                <EditorMeta close={setModalMeta} virtualDom={virtualDom} />
             ) : null}
         </>
     );

@@ -1,9 +1,15 @@
 import React from "react";
 import UIkit from "uikit";
 
-const Panel = ({ modalChoose, modalBackup, save }) => {
+const Panel = ({ modalChoose, modalBackup, modalMeta, save }) => {
     return (
         <div className="panel">
+            <button
+                className="uk-button uk-button-default uk-margin-small-right"
+                onClick={() => modalMeta(true)}
+            >
+                Edit META
+            </button>
             <button
                 className="uk-button uk-button-primary uk-margin-small-right"
                 onClick={() => modalChoose(true)}
