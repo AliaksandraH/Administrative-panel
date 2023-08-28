@@ -1,5 +1,4 @@
 import React from "react";
-import UIkit from "uikit";
 
 const Panel = ({ modalChoose, modalBackup, modalMeta, save }) => {
     return (
@@ -24,22 +23,7 @@ const Panel = ({ modalChoose, modalBackup, modalMeta, save }) => {
             </button>
             <button
                 className="uk-button uk-button-primary"
-                onClick={() =>
-                    save(
-                        () => {
-                            UIkit.notification({
-                                message: "Changes saved!",
-                                status: "success",
-                            });
-                        },
-                        () => {
-                            UIkit.notification({
-                                message: "Save error!",
-                                status: "danger",
-                            });
-                        }
-                    )
-                }
+                onClick={() => save()}
             >
                 Save
             </button>
