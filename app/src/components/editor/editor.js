@@ -16,6 +16,7 @@ import ChooseModal from "../chooseModal/chooseModal.js";
 import Panel from "../panel/panel.js";
 import EditorMeta from "../editorMeta/editorMeta.js";
 import EditorImages from "../editorImages/editorImages.js";
+import Login from "../login/login.js";
 
 const Editor = () => {
     const [pageList, setPageList] = useState([]);
@@ -25,6 +26,9 @@ const Editor = () => {
     const [modalChoose, setModalChoose] = useState(false);
     const [modalBackup, setModalBackup] = useState(false);
     const [modalMeta, setModalMeta] = useState(false);
+    const [auth, setAuth] = useState(false);
+    const [loginError, setLoginError] = useState(false);
+    const [loginLengthError, setLoginLengthError] = useState(false);
     const iframeRef = useRef(null);
     const virtualDom = useRef(null);
 
@@ -156,18 +160,56 @@ const Editor = () => {
         loadBackupsList();
     };
 
+    const checkAuth = () => {
+        axios.get("./api/checkAuth.php").then((res) => {
+            setAuth(res.data.auth);
+        });
+    };
+
+    const login = (pass) => {
+        if (pass.length > 5) {
+            axios.post("./api/login.php", { password: pass }).then((res) => {
+                setAuth(res.data.auth);
+                setLoginError(!res.data.auth);
+                setLoginLengthError(false);
+            });
+        } else {
+            setLoginError(false);
+            setLoginLengthError(true);
+        }
+    };
+
+    const logout = () => {
+        axios.get("./api/logout.php").then(() => {
+            window.location.replace("/");
+        });
+    };
+
     const init = (page) => {
-        setLoading(true);
-        open(page);
+        if (auth) {
+            setLoading(true);
+            open(page);
+            loadPageList();
+        }
     };
 
     useEffect(() => {
-        init(currentPage);
-        loadPageList();
+        checkAuth();
     }, []);
+
+    useEffect(() => {
+        init(currentPage);
+    }, [auth]);
 
     return (
         <>
+            {!auth ? (
+                <Login
+                    login={login}
+                    lengthError={loginLengthError}
+                    passwordError={loginError}
+                />
+            ) : null}
             <iframe src="" ref={iframeRef} frameBorder="0"></iframe>
             <input
                 id="img-upload"
@@ -182,22 +224,22 @@ const Editor = () => {
                 modalMeta={setModalMeta}
                 save={save}
                 showNotifications={showNotifications}
+                logout={logout}
             />
-            {modalChoose ? (
+            {modalChoose && (
                 <ChooseModal
                     data={pageList}
                     redirect={init}
                     close={setModalChoose}
                 />
-            ) : null}
-
-            {modalBackup ? (
+            )}
+            {modalBackup && (
                 <ChooseModal
                     data={backupsList}
                     redirect={restoreBackup}
                     close={setModalBackup}
                 />
-            ) : null}
+            )}
             {modalMeta && virtualDom ? (
                 <EditorMeta close={setModalMeta} virtualDom={virtualDom} />
             ) : null}
