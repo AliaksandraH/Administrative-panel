@@ -1,6 +1,6 @@
 import React from "react";
 
-const ChooseModal = ({ data, redirect, close }) => {
+const Modal = ({ data, redirect, close }) => {
     const list = data.map((item) => {
         if (item.time) {
             return (
@@ -60,4 +60,4 @@ const ChooseModal = ({ data, redirect, close }) => {
     );
 };
 
-export default ChooseModal;
+export default Modal;

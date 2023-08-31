@@ -1,23 +1,34 @@
 import React from "react";
+import axios from "axios";
 
-const Panel = ({ modalChoose, modalBackup, modalMeta, save, logout }) => {
+const Panel = ({ modals, save }) => {
+    const logout = () => {
+        axios.get("./api/logout.php").then(() => {
+            window.location.replace("/");
+        });
+    };
+
+    const onChangeModals = (modal) => {
+        modals({ [modal]: true });
+    };
+
     return (
         <div className="panel">
             <button
                 className="uk-button uk-button-default uk-margin-small-right"
-                onClick={() => modalMeta(true)}
+                onClick={() => onChangeModals("meta")}
             >
                 Edit META
             </button>
             <button
                 className="uk-button uk-button-primary uk-margin-small-right"
-                onClick={() => modalChoose(true)}
+                onClick={() => onChangeModals("choose")}
             >
                 Open
             </button>
             <button
                 className="uk-button uk-button-primary uk-margin-small-right"
-                onClick={() => modalBackup(true)}
+                onClick={() => onChangeModals("backup")}
             >
                 Restore
             </button>

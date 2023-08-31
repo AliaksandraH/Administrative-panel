@@ -1,7 +1,23 @@
 import React, { useState } from "react";
+import axios from "axios";
 
-const Login = ({ login, lengthError, passwordError }) => {
+const Login = ({ auth }) => {
     const [password, setPassword] = useState("");
+    const [loginError, setLoginError] = useState(false);
+    const [loginLengthError, setLoginLengthError] = useState(false);
+
+    const login = (pass) => {
+        if (pass.length > 5) {
+            axios.post("./api/login.php", { password: pass }).then((res) => {
+                auth(res.data.auth);
+                setLoginError(!res.data.auth);
+                setLoginLengthError(false);
+            });
+        } else {
+            setLoginError(false);
+            setLoginLengthError(true);
+        }
+    };
 
     const onPasswordChange = (e) => {
         setPassword(e.target.value);
@@ -23,12 +39,12 @@ const Login = ({ login, lengthError, passwordError }) => {
                     className="uk-input uk-margin-top"
                     placeholder="Password"
                 />
-                {lengthError && (
+                {loginLengthError && (
                     <span className="login-error">
                         Password must be longer than 5 characters!
                     </span>
                 )}
-                {passwordError && !lengthError ? (
+                {loginError && !loginLengthError ? (
                     <span className="login-error">Wrong password entered!</span>
                 ) : null}
                 <p className="uk-text-right">
